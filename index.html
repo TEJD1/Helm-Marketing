@@ -919,10 +919,11 @@
     <div class="fade-up">
       <h2>Ready to take the<br><span class="grad-text">helm?</span></h2>
       <p>Join the early access list. We're onboarding UK practices now.<br>No commitment. No setup fee. Just better.</p>
-      <div class="cta-form">
-        <input type="email" class="cta-input" placeholder="your@practice.com">
-        <button class="btn-primary" onclick="this.textContent='✓ Joined!';this.style.background='linear-gradient(135deg,#2ECC71,#27AE60)'">Request access</button>
+      <div class="cta-form" id="access-form">
+        <input type="email" id="access-email" class="cta-input" placeholder="your@practice.com" required>
+        <button class="btn-primary" id="access-btn" onclick="submitEarlyAccess(event)">Request access</button>
       </div>
+      <div id="access-msg" style="display:none;font-size:15px;font-weight:500;margin-bottom:16px"></div>
       <div class="cta-note">For insurers and corporate groups — <a href="/cdn-cgi/l/email-protection#8ce4e9e0e0e3cce4e9e0e1a2fae9f8" style="color:#FF8DB8;text-decoration:none"><span class="__cf_email__" data-cfemail="1a727f7676755a727f7677346c7f6e">[email&#160;protected]</span></a></div>
     </div>
   </div>
@@ -947,7 +948,42 @@
   </div>
 </footer>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js">
+
+  async function submitEarlyAccess(e) {
+    e.preventDefault();
+    const email = document.getElementById('access-email').value.trim();
+    const btn   = document.getElementById('access-btn');
+    const msg   = document.getElementById('access-msg');
+    const form  = document.getElementById('access-form');
+    if (!email || !email.includes('@')) {
+      msg.style.display='block'; msg.style.color='#E74C3C';
+      msg.textContent='Please enter a valid email address.'; return;
+    }
+    btn.textContent='Sending...'; btn.disabled=true;
+    try {
+      const res = await fetch('https://zkjtblqlohsorexjdkcy.supabase.co/rest/v1/early_access_requests', {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpranRibHFsb2hzb3JleGpka2N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAxNDAyMjcsImV4cCI6MjA1NTcxNjIyN30.t6bpRbFBiGpHiHCmFGO3gIBPBVkANf1IrSyMzQvJdRE',
+          'Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpranRibHFsb2hzb3JleGpka2N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAxNDAyMjcsImV4cCI6MjA1NTcxNjIyN30.t6bpRbFBiGpHiHCmFGO3gIBPBVkANf1IrSyMzQvJdRE',
+          'Prefer':'return=minimal'
+        },
+        body: JSON.stringify({email:email, source:'helm.vet'})
+      });
+      if (res.ok || res.status===201) {
+        form.style.display='none';
+        msg.style.display='block'; msg.style.color='#8B3FBF';
+        msg.innerHTML="&#x2713; You're on the list. We'll be in touch soon.";
+      } else { throw new Error(res.status); }
+    } catch(err) {
+      btn.textContent='Request access'; btn.disabled=false;
+      msg.style.display='block'; msg.style.color='#E74C3C';
+      msg.textContent="Something went wrong — please email hello@helm.vet directly.";
+    }
+  }
+</script><script>
   // Scroll animations — progressive enhancement only
   if ('IntersectionObserver' in window) {
     document.querySelectorAll('.fade-up').forEach(el => el.classList.add('animate'));
