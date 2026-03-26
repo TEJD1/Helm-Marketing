@@ -487,10 +487,9 @@
   canvas.height = 120;
 
   const eyes = [
-    { cx: 71.0, cy: 61.3, rx: 4.0, ry: 6.5 },
-    { cx: 48.8, cy: 61.3, rx: 3.5, ry: 6.5 }
+    { cx: 71.0, cy: 61.3, rx: 4.0, ry: 6.5, lid: 'rgb(165, 88, 10)' },   // right — brown fur
+    { cx: 48.8, cy: 61.3, rx: 3.5, ry: 6.5, lid: 'rgb(221, 219, 220)' }  // left — white fur
   ];
-  const lidColour = 'rgb(165, 88, 10)';
 
   function drawLids(fraction) {
     ctx.clearRect(0, 0, 120, 120);
@@ -503,7 +502,7 @@
       ctx.clip();
       ctx.beginPath();
       ctx.ellipse(e.cx, e.cy, e.rx + 2, e.ry + 2, 0, 0, Math.PI * 2);
-      ctx.fillStyle = lidColour;
+      ctx.fillStyle = e.lid;
       ctx.fill();
       ctx.restore();
     });
