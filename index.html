@@ -273,25 +273,13 @@
       height: 120px;
       display: block;
       transform-origin: center 85%;
-      animation: helmWag 2.4s ease-in-out infinite;
-    }
-    @keyframes helmWag {
-      0%   { transform: rotate(0deg); }
-      10%  { transform: rotate(-14deg); }
-      22%  { transform: rotate(14deg); }
-      34%  { transform: rotate(-10deg); }
-      46%  { transform: rotate(10deg); }
-      58%  { transform: rotate(-5deg); }
-      68%  { transform: rotate(5deg); }
-      78%  { transform: rotate(-2deg); }
-      86%  { transform: rotate(2deg); }
-      93%  { transform: rotate(0deg); }
-      100% { transform: rotate(0deg); }
+      transition: transform 0.1s ease;
     }
     .dog-mascot:hover {
-      animation: helmWagFast 0.5s ease-in-out infinite;
+      animation: helmWag 0.5s ease-in-out infinite;
+      cursor: pointer;
     }
-    @keyframes helmWagFast {
+    @keyframes helmWag {
       0%   { transform: rotate(-18deg); }
       50%  { transform: rotate(18deg); }
       100% { transform: rotate(-18deg); }
