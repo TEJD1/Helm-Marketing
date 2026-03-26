@@ -432,81 +432,89 @@
   const dog = document.querySelector('.dog-mascot');
   if (!dog) return;
 
-  let angle = 0;
-  let speed = 0;          // current angular velocity (deg/frame)
-  const maxSpeed = 18;    // peak swing amplitude
-  const accel = 2.5;      // ramp-up per frame
-  const friction = 0.94;  // deceleration multiplier on mouseout
-  let hovering = false;
-  let raf = null;
-  let phase = 0;          // tracks position in the sine wave
+  // ── WAG ──
+  let angle = 0, speed = 0, phase = 0;
+  const maxSpeed = 18, accel = 2.5, friction = 0.94;
+  let hovering = false, raf = null;
 
   function tick() {
     if (hovering) {
-      // Ramp up speed toward maxSpeed
       if (speed < maxSpeed) speed = Math.min(speed + accel, maxSpeed);
     } else {
-      // Decelerate
       speed *= friction;
     }
-
     if (speed < 0.05) {
-      // Fully stopped — snap back to 0 and exit loop
       dog.style.transform = 'rotate(0deg)';
-      speed = 0;
-      phase = 0;
-      raf = null;
+      speed = 0; phase = 0; raf = null;
       return;
     }
-
-    // Advance the sine wave — faster speed = faster oscillation
     phase += (speed / maxSpeed) * 0.12;
     angle = speed * Math.sin(phase);
     dog.style.transform = 'rotate(' + angle + 'deg)';
-
     raf = requestAnimationFrame(tick);
   }
 
+  function startWag() {
+    hovering = true;
+    clearTimeout(blinkTimer);
+    blinking = false;
+    drawLids(0);
+    if (!raf) raf = requestAnimationFrame(tick);
+  }
 
-  // ── BLINK LOGIC ──
+  function stopWag() {
+    hovering = false;
+    scheduleBlink();
+  }
+
+  // Mouse
+  dog.addEventListener('mouseenter', startWag);
+  dog.addEventListener('mouseleave', stopWag);
+
+  // Touch — wag on tap, stop when finger lifts
+  dog.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    startWag();
+  }, { passive: false });
+
+  dog.addEventListener('touchend', stopWag);
+  dog.addEventListener('touchcancel', stopWag);
+
+  // ── BLINK ──
   const canvas = document.getElementById('blink-canvas');
   const ctx = canvas.getContext('2d');
   canvas.width = 120;
   canvas.height = 120;
 
-  // Eye positions in 120px display space
   const eyes = [
-    { cx: 71.0, cy: 61.3, rx: 4.0, ry: 6.5 },   // right eye
-    { cx: 48.8, cy: 61.3, rx: 3.5, ry: 6.5 }    // left eye — same ry so lids close in sync
+    { cx: 71.0, cy: 61.3, rx: 4.0, ry: 6.5 },
+    { cx: 48.8, cy: 61.3, rx: 3.5, ry: 6.5 }
   ];
-  const lidColour = 'rgb(171, 93, 10)';
-
-  const LID_H = 13;  // shared fixed lid travel in px — both eyes identical
+  const lidColour = 'rgb(165, 88, 10)';
 
   function drawLids(fraction) {
     ctx.clearRect(0, 0, 120, 120);
     if (fraction <= 0) return;
-    ctx.fillStyle = lidColour;
-    const clipH = LID_H * fraction;
-    eyes.forEach(e => {
+    const clipH = 14 * fraction;
+    eyes.forEach(function(e) {
       ctx.save();
       ctx.beginPath();
-      ctx.rect(e.cx - e.rx - 2, e.cy - e.ry - 1, (e.rx + 2) * 2, clipH + 1);
+      ctx.rect(e.cx - e.rx - 3, e.cy - e.ry - 2, (e.rx + 3) * 2, clipH + 2);
       ctx.clip();
       ctx.beginPath();
-      ctx.ellipse(e.cx, e.cy, e.rx + 1, e.ry + 1, 0, 0, Math.PI * 2);
+      ctx.ellipse(e.cx, e.cy, e.rx + 2, e.ry + 2, 0, 0, Math.PI * 2);
+      ctx.fillStyle = lidColour;
       ctx.fill();
       ctx.restore();
     });
   }
 
-  let blinkTimer = null;
-  let blinking = false;
+  let blinkTimer = null, blinking = false;
 
   function doBlink() {
-    if (blinking || hovering || speed > 0.5) return;
+    if (blinking || hovering || speed > 0.5) { scheduleBlink(); return; }
     blinking = true;
-    const totalMs = 420;  // close + open
+    const totalMs = 400;
     const start = performance.now();
     function animBlink(now) {
       const t = (now - start) / totalMs;
@@ -516,7 +524,6 @@
         scheduleBlink();
         return;
       }
-      // 0→0.5: close (0→1), 0.5→1: open (1→0)
       const frac = t < 0.5 ? t * 2 : (1 - t) * 2;
       drawLids(frac);
       requestAnimationFrame(animBlink);
@@ -525,29 +532,13 @@
   }
 
   function scheduleBlink() {
-    const delay = 1500 + Math.random() * 1500;  // 1.5–3 seconds
-    blinkTimer = setTimeout(doBlink, delay);
+    clearTimeout(blinkTimer);
+    blinkTimer = setTimeout(doBlink, 1800 + Math.random() * 1500);
   }
 
-  // Cancel blink mid-animation if user hovers
-  dog.addEventListener('mouseenter', function() {
-    clearTimeout(blinkTimer);
-    blinking = false;
-    drawLids(0);
-  });
-
   scheduleBlink();
-
-  dog.addEventListener('mouseenter', function() {
-    hovering = true;
-    if (!raf) raf = requestAnimationFrame(tick);
-  });
-
-  dog.addEventListener('mouseleave', function() {
-    hovering = false;
-    // loop continues; friction will wind it down naturally
-  });
 })();
 </script>
+
 </body>
 </html>
