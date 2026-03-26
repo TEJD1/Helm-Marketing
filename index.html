@@ -477,17 +477,18 @@
   // Eye positions in 120px display space
   const eyes = [
     { cx: 71.0, cy: 61.3, rx: 4.0, ry: 6.5 },   // right eye
-    { cx: 48.8, cy: 61.3, rx: 3.5, ry: 6.0 }    // left eye
+    { cx: 48.8, cy: 61.3, rx: 3.5, ry: 6.5 }    // left eye — same ry so lids close in sync
   ];
   const lidColour = 'rgb(171, 93, 10)';
+
+  const LID_H = 13;  // shared fixed lid travel in px — both eyes identical
 
   function drawLids(fraction) {
     ctx.clearRect(0, 0, 120, 120);
     if (fraction <= 0) return;
     ctx.fillStyle = lidColour;
+    const clipH = LID_H * fraction;
     eyes.forEach(e => {
-      // draw a filled ellipse clipped to top `fraction` of the eye height
-      const clipH = e.ry * 2 * fraction;
       ctx.save();
       ctx.beginPath();
       ctx.rect(e.cx - e.rx - 2, e.cy - e.ry - 1, (e.rx + 2) * 2, clipH + 1);
