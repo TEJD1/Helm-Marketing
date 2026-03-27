@@ -433,23 +433,40 @@
   if (!dog) return;
 
   // ── WAG ──
-  let angle = 0, speed = 0, phase = 0;
-  const maxSpeed = 18, accel = 2.5, friction = 0.94;
+  // Amplitude and phase rate are decoupled so the dog keeps wide full swings
+  // as it winds down — like a real pendulum losing energy slowly.
+  let phase = 0;
+  let amplitude = 0;    // swing width in degrees
+  let phaseRate = 0;    // oscillation speed
+  const maxAmp  = 18;
+  const maxRate = 0.13;
+  const accel   = 1.8;
+  // Amplitude decays very slowly (~15s from full to stop)
+  // Phase rate stays almost constant so full swings keep completing
+  const ampDecay  = 0.9978;
+  const rateDecay = 0.9995;
   let hovering = false, raf = null;
 
   function tick() {
     if (hovering) {
-      if (speed < maxSpeed) speed = Math.min(speed + accel, maxSpeed);
+      amplitude = Math.min(amplitude + accel,        maxAmp);
+      phaseRate = Math.min(phaseRate + accel * 0.007, maxRate);
     } else {
-      speed *= friction;
+      amplitude *= ampDecay;
+      phaseRate *= rateDecay;
     }
-    if (speed < 0.05) {
-      dog.style.transform = 'rotate(0deg)';
-      speed = 0; phase = 0; raf = null;
+
+    if (amplitude < 0.12) {
+      // Smooth final glide to rest
+      dog.style.transition = 'transform 1.2s ease-out';
+      dog.style.transform  = 'rotate(0deg)';
+      setTimeout(function() { dog.style.transition = ''; }, 1200);
+      amplitude = 0; phaseRate = 0; phase = 0; raf = null;
       return;
     }
-    phase += (speed / maxSpeed) * 0.12;
-    angle = speed * Math.sin(phase);
+
+    phase += phaseRate;
+    const angle = amplitude * Math.sin(phase);
     dog.style.transform = 'rotate(' + angle + 'deg)';
     raf = requestAnimationFrame(tick);
   }
